@@ -1,0 +1,48 @@
+{
+	"name": "algobank-backend",
+	"version": "0.1.0",
+	"description": "Secure account, transaction, and authentication services for AlgoBank platform.",
+	"private": true,
+	"scripts": {
+		"build": "tsc --project tsconfig.json",
+		"dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+		"lint": "eslint \"src/**/*.{ts,tsx}\"",
+		"migrate": "node scripts/run-migrate.js",
+		"test": "npm run build && node --test ./tests/backend.e2e.test.cjs",
+		"start": "node dist/server.js",
+		"pentest": "ts-node-dev --transpile-only --exit-child src/scripts/pentest.ts",
+		"create:admin": "ts-node-dev --transpile-only --exit-child src/scripts/createAdmin.ts"
+	},
+	"dependencies": {
+		"bcryptjs": "^2.4.3",
+		"cors": "^2.8.5",
+		"dotenv": "^16.4.5",
+		"express": "^4.19.2",
+		"express-validator": "^7.0.1",
+		"helmet": "^7.1.0",
+		"jsonwebtoken": "^9.0.2",
+		"pg": "^8.11.5",
+		"redis": "^4.6.12",
+		"uuid": "^9.0.1"
+	},
+	"devDependencies": {
+		"@types/bcryptjs": "^2.4.6",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^4.17.23",
+		"@types/express-validator": "^3.0.2",
+		"@types/jsonwebtoken": "^9.0.6",
+		"@types/node": "^20.14.10",
+		"@types/pg": "^8.11.6",
+		"@types/uuid": "^9.0.7",
+		"@typescript-eslint/eslint-plugin": "^7.16.1",
+		"@typescript-eslint/parser": "^7.16.1",
+		"eslint": "^8.57.0",
+		"eslint-config-prettier": "^9.1.0",
+		"eslint-plugin-import": "^2.29.1",
+		"ts-node-dev": "^2.0.0",
+		"typescript": "^5.5.4"
+	},
+	"engines": {
+		"node": ">=20.0.0"
+	}
+}

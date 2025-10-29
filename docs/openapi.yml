@@ -1,0 +1,311 @@
+openapi: 3.0.3
+info:
+  title: AlgoBank Backend API
+  version: 0.1.0
+  description: REST API for authentication, accounts, and transactions in the AlgoBank platform.
+servers:
+  - url: http://localhost:4000
+paths:
+  /auth/register:
+    post:
+      summary: Self-register a new client user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '201':
+          description: Authentication tokens issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+  /auth/admin/register:
+    post:
+      summary: Admin-provision a new user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, role]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 12
+                role:
+                  $ref: '#/components/schemas/UserRole'
+      responses:
+        '201':
+          description: Authentication tokens issued for the new user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+  /auth/login:
+    post:
+      summary: Authenticate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Authentication tokens
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+  /auth/refresh:
+    post:
+      summary: Rotate refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Rotated token pair
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenPair'
+  /auth/logout:
+    post:
+      summary: Revoke all refresh tokens for the current user
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logout successful
+  /auth/me:
+    get:
+      summary: Retrieve current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+  /accounts:
+    get:
+      summary: List accounts for current user or all accounts for privileged roles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Accounts collection
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+    post:
+      summary: Create an account
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, currency]
+              properties:
+                name:
+                  type: string
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                userId:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+  /transactions/transfer:
+    post:
+      summary: Create a double-entry transfer between accounts
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sourceAccountId, destinationAccountId, amount, currency]
+              properties:
+                sourceAccountId:
+                  type: string
+                  format: uuid
+                destinationAccountId:
+                  type: string
+                  format: uuid
+                amount:
+                  type: number
+                  minimum: 0
+                currency:
+                  type: string
+                  minLength: 3
+                  maxLength: 3
+                memo:
+                  type: string
+      responses:
+        '201':
+          description: Transfer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  debit:
+                    $ref: '#/components/schemas/Transaction'
+                  credit:
+                    $ref: '#/components/schemas/Transaction'
+                  encryptedPayload:
+                    $ref: '#/components/schemas/EncryptedPayload'
+  /transactions/account/{accountId}:
+    get:
+      summary: List transactions for a specific account
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: accountId
+          schema:
+            type: string
+            format: uuid
+          required: true
+      responses:
+        '200':
+          description: Account transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    TokenPair:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    UserRole:
+      type: string
+      enum: [admin, auditor, client]
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/UserRole'
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        balance:
+          type: string
+        currency:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        account_id:
+          type: string
+          format: uuid
+        counterparty_account_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+        currency:
+          type: string
+        direction:
+          type: string
+          enum: [credit, debit]
+        memo:
+          type: string
+        encrypted_payload:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+    EncryptedPayload:
+      type: object
+      properties:
+        encryptedKey:
+          type: string
+        iv:
+          type: string
+        authTag:
+          type: string
+        ciphertext:
+          type: string

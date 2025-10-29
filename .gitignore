@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+**/dist/
+.env
+**/.env
+npm-debug.log*
+.DS_Store
+backend/private.b64
+backend/private.pem
+backend/public.b64
+backend/public.pem
+__pycache__/
+*.pyc
+frontend/.env.local
